@@ -1,26 +1,229 @@
-# Project Empty Template
+# Order Manager
 
-Este é um repositório de exemplo para você começar a desenvolver a questão, leia com atenção os requisitos do enunciado da questão na plataforma e seguia as boas práticas sobre como utilizar este repositório.
+Solução completa para gerenciamento e processamento de ordens usando protocolo FIX 4.4, com backend em C# (.NET 8) e frontend em Angular.
 
+## Descrição
 
-## Readme do Repositório
+Solução composta por três aplicações principais que se comunicam usando o protocolo FIX com a versão 4.4 (lib do QuickFix disponível em https://quickfixn.org/):
 
-- Deve conter o título do projeto
-- Uma descrição sobre o projeto em frase
-- Deve conter uma lista com linguagem, framework e/ou tecnologias usadas
-- Como instalar e usar o projeto (instruções)
-- Não esqueça o [.gitignore](https://www.toptal.com/developers/gitignore)
-- Se está usando github pessoal, referencie que é um challenge by coodesh:  
+1. **OrderGenerator** (C# API) - Aplicação que expõe endpoints REST para criar novas ordens
+2. **OrderAccumulator** (C# FIX Servidor) - Processa ordens via FIX e calcula exposição financeira
+3. **Frontend** (Angular) - Interface web para criar ordens e visualizar exposição
 
->  This is a challenge by [Coodesh](https://coodesh.com/)
+## Tecnologias Utilizadas
 
-## Finalização e Instruções para a Apresentação
+- **Backend**: C# 12, .NET 8, ASP.NET Core
+- **Protocolo**: FIX 4.4 (QuickFixN)
+- **Frontend**: Angular 17, TypeScript, Bootstrap
+- **Containerização**: Docker & Docker Compose
 
-1. Adicione o link do repositório com a sua solução na questão na plataforma
-2. Verifique se o Readme está bom e faça o commit final em seu repositório;
-3. Envie e aguarde as instruções para seguir. Caso o teste tenha apresentação de vídeo, dentro da tela de entrega será possível gravar após adicionar o link do repositório. Sucesso e boa sorte. =)
+## Fluxo de Comunicação
 
+```
+Frontend (Angular)
+    ↓
+OrderGenerator (API REST - C#)
+    ↓
+FIX Protocol 4.4
+    ↓
+OrderAccumulator (FIX Server - C#)
+    ↓
+Exposição Calculada & Armazenada
+```
 
-## Suporte
+## Funcionalidades
 
-Para tirar dúvidas sobre o processo envie uma mensagem diretamente a um especialista no chat da plataforma. 
+### OrderGenerator
+
+- API REST para criar novas ordens (NewOrderSingle)
+- Validação de campos:
+  - **Símbolo**: PETR4, VALE3 ou VIIA4
+  - **Lado**: COMPRA ou VENDA
+  - **Quantidade**: 1 até 99.999
+  - **Preço**: Múltiplo de 0,01, máximo 999,99
+- Comunicação FIX com OrderAccumulator
+
+### OrderAccumulator
+
+- Servidor FIX que recebe ordens do OrderGenerator
+- Calcula exposição financeira consolidada por símbolo
+- API REST para consultar:
+  - Exposição total por símbolo
+  - Todas as ordens processadas
+  - Resumo de compras e vendas
+
+### Frontend
+
+- Formulário intuitivo para criar ordens
+- Visualização em tempo real da exposição financeira
+- Dashboard com histórico de ordens
+
+## Instalação e Uso
+
+### Pré-requisitos
+
+- Docker Desktop instalado
+- Git
+- (Opcional) .NET 8 SDK, Node.js 20+ para desenvolvimento local
+
+### Com Docker Compose (Recomendado)
+
+1. **Clone o repositório**
+
+   ```bash
+   git clone <repository-url>
+   cd OrderManager
+   ```
+
+2. **Inicie os containers**
+
+   ```bash
+   docker-compose up --build
+   ```
+
+   Aguarde até ver as mensagens indicando que os serviços estão rodando.
+
+3. **Acesse a aplicação**
+   - Frontend: http://localhost:4200
+   - OrderGenerator Swagger: http://localhost:5000/swagger
+   - OrderAccumulator Swagger: http://localhost:5001/swagger
+
+4. **Parar os containers**
+   ```bash
+   docker-compose down
+   ```
+
+### Desenvolvimento Local (sem Docker)
+
+#### OrderGenerator
+
+```bash
+cd src/OrderGenerator
+dotnet restore
+dotnet run --launch-profile https
+```
+
+Acesso: http://localhost:5000
+
+#### OrderAccumulator
+
+```bash
+cd src/OrderAccumulator
+dotnet restore
+dotnet run --launch-profile https
+```
+
+Acesso: http://localhost:5001
+
+#### Frontend
+
+```bash
+cd src/Frontend
+npm install
+ng serve
+```
+
+Acesso: http://localhost:4200
+
+## Estrutura do Projeto
+
+```
+OrderManager/
+├── src/
+│   ├── OrderGenerator/           # API REST para criar ordens
+│   │   ├── Controllers/
+│   │   ├── FIXClientService.cs   # Cliente FIX
+│   │   ├── Models/
+│   │   └── Program.cs
+│   ├── OrderAccumulator/         # Servidor FIX & API de exposição
+│   │   ├── Controllers/
+│   │   ├── FIXServerService.cs   # Servidor FIX
+│   │   ├── ExposureService.cs    # Cálculo de exposição
+│   │   └── Program.cs
+│   └── Frontend/                 # Angular Application
+│       ├── src/app/
+│       │   ├── components/
+│       │   ├── services/
+│       │   └── app.component.ts
+│       └── package.json
+├── .docker/
+│   ├── Dockerfile.OrderGenerator
+│   ├── Dockerfile.OrderAccumulator
+│   └── Dockerfile.Frontend
+├── docker-compose.yml
+└── README.md
+```
+
+## Endpoints da API
+
+### OrderGenerator
+
+- **POST** `/api/orders/create` - Criar nova ordem
+  ```json
+  {
+    "symbol": "PETR4",
+    "side": "COMPRA",
+    "quantity": 100,
+    "price": 25.5
+  }
+  ```
+
+### OrderAccumulator
+
+- **GET** `/api/exposure/all` - Obter exposição consolidada
+- **GET** `/api/exposure/symbol/{symbol}` - Obter exposição de um símbolo
+- **GET** `/api/exposure/orders` - Obter todas as ordens processadas
+
+## Exemplo de Uso
+
+1. Abra http://localhost:4200 no navegador
+2. Na aba "Nova Ordem", preencha os campos:
+   - Símbolo: PETR4
+   - Lado: COMPRA
+   - Quantidade: 1000
+   - Preço: 25.50
+3. Clique em "Enviar Ordem"
+4. Acesse a aba "Exposição" para visualizar a exposição financeira
+
+## Cálculo de Exposição
+
+Para cada símbolo:
+
+```
+Exposição = (Σ Preço × Quantidade COMPRA) - (Σ Preço × Quantidade VENDA)
+```
+
+**Exemplo:**
+
+- COMPRA: 100 unidades @ 25,50 = R$ 2.550,00
+- COMPRA: 50 unidades @ 26,00 = R$ 1.300,00
+- VENDA: 30 unidades @ 25,75 = R$ 772,50
+
+Exposição = (2.550 + 1.300) - 772,50 = **R$ 3.077,50**
+
+## Troubleshooting
+
+### Containers não iniciam
+
+```bash
+docker-compose logs
+```
+
+### Erro de conexão FIX
+
+- Certifique-se de que o OrderAccumulator está rodando na porta 9876
+- Verifique os arquivos de configuração em `Data/client.cfg` e `Data/server.cfg`
+
+### Frontend não se conecta às APIs
+
+- Verifique a porta do OrderGenerator (deve ser 5000)
+- Verifique a porta do OrderAccumulator (deve ser 5001)
+- Ative CORS nas APIs (já configurado por padrão)
+
+## Licença
+
+MIT
+
+---
+
+This is a challenge by [Coodesh](https://coodesh.com/)
