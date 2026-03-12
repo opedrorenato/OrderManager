@@ -1,4 +1,8 @@
 using FluentValidation;
+using QuickFix;
+using QuickFix.Logger;
+using QuickFix.Store;
+using QuickFix.Transport;
 using Service.Interfaces;
 using Service.Services;
 using Service.Validators;
@@ -8,9 +12,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddEndpointsApiExplorer();
-
 builder.Services.AddControllers();
 
+
+
+// Swagger
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
@@ -25,9 +31,28 @@ builder.Services.AddSwaggerGen(c =>
     c.IncludeXmlComments(xmlPath);
 });
 
+
+
+// QuickFix
+var settings = new SessionSettings("initiator.cfg");
+var orderSender = new OrderSenderApp();
+var storeFactory = new FileStoreFactory(settings);
+var logFactory = new FileLogFactory(settings);
+
+var initiator = new SocketInitiator(orderSender, storeFactory, settings, logFactory);
+initiator.Start();
+
+
+
 // Dependencies
+builder.Services.AddSingleton(initiator);
+builder.Services.AddScoped<IOrderSenderService, OrderSenderService>();
+
 builder.Services.AddScoped<IOrderGeneratorService, OrderGeneratorService>();
+
 builder.Services.AddValidatorsFromAssemblyContaining<OrderValidator>();
+
+
 
 // Build
 var app = builder.Build();
