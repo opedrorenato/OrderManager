@@ -1,4 +1,6 @@
 <Solution>
   <Project Path="Domain/Domain.csproj" />
   <Project Path="OrderGenerator/Api.OrderGenerator.csproj" />
+  <Project Path="Service/Service.csproj" Id="f97b02b4-0154-48fd-82dc-692943daff2f" />
+  <Project Path="Tests/Tests.csproj" Id="d0b75f0c-599e-4d44-a03d-6db0929c5813" />
 </Solution>
