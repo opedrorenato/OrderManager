@@ -27,10 +27,7 @@ export class App {
           Validators.pattern('^[0-9]*$'),
         ],
       ],
-      price: [
-        '',
-        [Validators.required, Validators.min(0.01), Validators.pattern('^[0-9]+(\\.[0-9]{1,2})?$')],
-      ],
+      price: ['', [Validators.required, Validators.min(0.01), Validators.max(999.99)]],
     });
   }
 
@@ -40,17 +37,26 @@ export class App {
 
   onQuantityInput(event: any) {
     const input = event.target;
-    let value = this.formatInteger(input.value);
-    this.orderForm.get('quantity')?.setValue(value);
+    let digits = this.formatInteger(input.value);
+    this.orderForm.get('quantity')?.setValue(digits);
 
-    // Se o campo estiver vazio, limpa todos os erros (mantendo só required para submit)
-    if (!value) {
-      this.orderForm.get('quantity')?.setErrors(null);
+    // Se o campo estiver vazio, limpa erros de validação customizada
+    if (!digits) {
+      const errors = this.orderForm.get('quantity')?.errors;
+      if (errors) {
+        delete errors['max'];
+        delete errors['min'];
+        if (Object.keys(errors).length === 0) {
+          this.orderForm.get('quantity')?.setErrors(null);
+        } else {
+          this.orderForm.get('quantity')?.setErrors(errors);
+        }
+      }
       return;
     }
 
     // Validações
-    const numValue = parseInt(value);
+    const numValue = parseInt(digits);
 
     // Valor máximo de 99999
     if (numValue > 99999) {
@@ -73,37 +79,79 @@ export class App {
 
   onPriceInput(event: any) {
     const input = event.target;
-    let value = this.formatInteger(input.value);
-    this.orderForm.get('price')?.setValue(value);
+    let digits = this.formatInteger(input.value);
 
-    // Se o campo estiver vazio, limpa todos os erros (mantendo só required para submit)
-    if (!value) {
-      this.orderForm.get('price')?.setErrors(null);
+    if (!digits) {
+      input.value = '';
+      this.orderForm.get('price')?.setValue('');
+
+      // Limpa erros se o campo estiver vazio
+      const errors = this.orderForm.get('price')?.errors;
+      if (errors) {
+        delete errors['max'];
+        delete errors['min'];
+
+        if (Object.keys(errors).length === 0) {
+          this.orderForm.get('price')?.setErrors(null);
+        } else {
+          this.orderForm.get('price')?.setErrors(errors);
+        }
+      }
       return;
     }
 
-    // Validação em tempo real apenas se houver valor
-    const numValue = parseFloat(value);
+    // Converte para centavos e formata
+    const cents = parseInt(digits, 10);
+    const reais = Math.floor(cents / 100);
+    const centavos = cents % 100;
+
+    // Formata o valor
+    const formattedValue = `${reais},${centavos.toString().padStart(2, '0')}`;
+
+    // Atualiza o campo
+    input.value = formattedValue;
+
+    // Atualiza o form control com o valor real (em reais com ponto)
+    const realValue = (cents / 100).toFixed(2);
+    this.orderForm.get('price')?.setValue(realValue);
+
+    // Coloca o cursor no final
+    setTimeout(() => {
+      input.setSelectionRange(formattedValue.length, formattedValue.length);
+    }, 0);
+
+    // VALIDAÇÃO CORRETA - usa realValue, não digits!
+    const numValue = parseFloat(realValue);
+
+    // Limpa erros anteriores
+    const currentErrors: any = {};
+
+    // Verifica máximo
     if (numValue > 999.99) {
-      this.orderForm.get('price')?.setErrors({ max: true });
-      return;
+      currentErrors['max'] = true;
     }
 
+    // Verifica mínimo
     if (numValue < 0.01) {
-      this.orderForm.get('price')?.setErrors({ min: true });
-      return;
+      currentErrors['min'] = true;
     }
 
-    // Remove erros se o valor for válido
-    const errors = this.orderForm.get('price')?.errors;
-    if (errors) {
+    // Verifica se o campo está preenchido (required)
+    if (!realValue) {
+      currentErrors['required'] = true;
+    }
+
+    // Aplica os erros se houver algum, senão limpa
+    if (Object.keys(currentErrors).length > 0) {
+      this.orderForm.get('price')?.setErrors(currentErrors);
+    } else {
       this.orderForm.get('price')?.setErrors(null);
     }
   }
 
   formatInteger(value: any): string {
     // Remove qualquer caractere que não seja número ou ponto
-    let result = value.replace(/[^0-9.]/g, '');
+    let result = value.replace(/[^0-9]/g, '');
     return result;
   }
 
