@@ -2,19 +2,25 @@ import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
+import { OrderService } from './order.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ReactiveFormsModule, CommonModule],
+  imports: [RouterOutlet, ReactiveFormsModule, CommonModule, HttpClientModule],
   templateUrl: './app.html',
   styleUrl: './app.css',
+  providers: [OrderService],
 })
 export class App {
   protected readonly title = signal('Frontend');
   orderForm: FormGroup;
   submitted = false;
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private orderService: OrderService,
+  ) {
     this.orderForm = this.fb.group({
       symbol: ['', [Validators.required, Validators.minLength(1)]],
       side: ['COMPRA', Validators.required],
@@ -150,18 +156,24 @@ export class App {
   }
 
   formatInteger(value: any): string {
-    // Remove qualquer caractere que não seja número ou ponto
+    // Remove caracteres não numéricos
     let result = value.replace(/[^0-9]/g, '');
     return result;
   }
 
   onSubmit() {
+    this.getValidSymbols();
+
     this.submitted = true;
     if (this.orderForm.valid) {
       console.log('Ordem enviada:', this.orderForm.value);
-      // Enviar dados para o backend
-      // this.orderService.createOrder(this.orderForm.value).subscribe(...);
     }
+  }
+
+  getValidSymbols() {
+    this.orderService.getValidSymbols().subscribe((symbols) => {
+      console.log(symbols);
+    });
   }
 
   get f() {
