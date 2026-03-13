@@ -46,11 +46,14 @@
       <div class="form-group">
         <label for="quantity" class="form-label">Quantidade</label>
         <input
-          type="text"
-          id="quantity"
           class="form-control"
           formControlName="quantity"
+          id="quantity"
+          type="number"
           placeholder="Ex: 100"
+          min="0"
+          max="99999"
+          step="100"
           (input)="onQuantityInput($event)"
           [class.is-invalid]="
             (submitted || (f['quantity'].touched && f['quantity'].value)) && f['quantity'].errors
@@ -78,18 +81,30 @@
       <div class="form-group">
         <label for="price" class="form-label">Preço</label>
         <input
-          type="number"
-          id="price"
           class="form-control"
           formControlName="price"
+          id="price"
+          type="number"
           placeholder="Ex: 25.50"
           min="0.01"
+          max="999.99"
           step="0.01"
-          [class.is-invalid]="submitted && f['price'].errors"
+          (input)="onPriceInput($event)"
+          [class.is-invalid]="
+            (submitted || (f['price'].touched && f['price'].value)) && f['price'].errors
+          "
         />
-        <div class="error-message" *ngIf="submitted && f['price'].errors">
-          <span *ngIf="f['price'].errors['required']">Preço é obrigatório</span>
-          <span *ngIf="f['price'].errors['min']">Preço deve ser maior que 0</span>
+        <div
+          class="error-message"
+          *ngIf="(submitted || (f['price'].touched && f['price'].value)) && f['price'].errors"
+        >
+          <span *ngIf="submitted && f['price'].errors['required']">Preço é obrigatório</span>
+          <span *ngIf="f['price'].touched && f['price'].value && f['price'].errors['min']"
+            >Preço deve ser maior que 0.00</span
+          >
+          <span *ngIf="f['price'].touched && f['price'].value && f['price'].errors['max']"
+            >Preço deve ser menor que 999.99</span
+          >
         </div>
       </div>
 
