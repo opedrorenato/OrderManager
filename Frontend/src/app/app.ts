@@ -176,8 +176,8 @@ export class App {
     const formValue = this.orderForm.value;
 
     const orderToSend = {
-      symbol: formValue.symbol,
-      side: formValue.side,
+      symbol: formValue.symbol.toUpperCase(),
+      side: formValue.side.toUpperCase(),
       quantity: parseInt(formValue.quantity),
       price: parseFloat(formValue.price),
     };
@@ -189,7 +189,20 @@ export class App {
         this.orderForm.reset({ side: 'COMPRA' });
       },
       error: (error) => {
-        console.error('Erro detalhado ao criar ordem:', error);
+        console.error('Erro ao criar ordem:', error);
+
+        if (error.status === 0) {
+          alert('Erro: A API está indisponível. Verifique se o servidor está rodando.');
+        } else if (error.status === 404) {
+          alert('Erro 404: Endpoint não encontrado.');
+        } else if (error.status === 500) {
+          alert('Erro interno do servidor. Tente novamente mais tarde.');
+        } else if (error.status === 400 && Array.isArray(error.error)) {
+          const errorList = error.error.join('\n');
+          alert(`Erro 400: Requisição Inválida - Erros de validação:\n${errorList}`);
+        } else {
+          alert(`Erro ao criar ordem: ${error.message}`);
+        }
       },
     });
   }
@@ -200,7 +213,7 @@ export class App {
         console.log('Símbolos recebidos:', symbols);
       },
       error: (error) => {
-        console.error('Erro detalhado:', error);
+        console.error('Erro ao consultar Símbolos:', error);
 
         if (error.status === 0) {
           alert('Erro: A API está indisponível. Verifique se o servidor está rodando.');
