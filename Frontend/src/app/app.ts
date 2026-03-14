@@ -162,17 +162,56 @@ export class App {
   }
 
   onSubmit() {
-    this.getValidSymbols();
+    if (!this.orderForm.valid) {
+      return;
+    }
 
     this.submitted = true;
-    if (this.orderForm.valid) {
-      console.log('Ordem enviada:', this.orderForm.value);
-    }
+
+    this.createOrder();
+    console.log('Ordem enviada:', this.orderForm.value);
+  }
+
+  createOrder() {
+    const formValue = this.orderForm.value;
+
+    const orderToSend = {
+      symbol: formValue.symbol,
+      side: formValue.side,
+      quantity: parseInt(formValue.quantity),
+      price: parseFloat(formValue.price),
+    };
+
+    this.orderService.createOrder(orderToSend).subscribe({
+      next: (response) => {
+        console.log('Ordem criada com sucesso:', response);
+        alert('Ordem criada com sucesso!');
+        this.orderForm.reset({ side: 'COMPRA' });
+      },
+      error: (error) => {
+        console.error('Erro detalhado ao criar ordem:', error);
+      },
+    });
   }
 
   getValidSymbols() {
-    this.orderService.getValidSymbols().subscribe((symbols) => {
-      console.log(symbols);
+    this.orderService.getValidSymbols().subscribe({
+      next: (symbols) => {
+        console.log('Símbolos recebidos:', symbols);
+      },
+      error: (error) => {
+        console.error('Erro detalhado:', error);
+
+        if (error.status === 0) {
+          alert('Erro: A API está indisponível. Verifique se o servidor está rodando.');
+        } else if (error.status === 404) {
+          alert('Erro 404: Endpoint não encontrado.');
+        } else if (error.status === 500) {
+          alert('Erro interno do servidor. Tente novamente mais tarde.');
+        } else {
+          alert(`Erro ao buscar símbolos: ${error.message}`);
+        }
+      },
     });
   }
 

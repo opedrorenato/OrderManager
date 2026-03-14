@@ -2,6 +2,7 @@
 using Domain.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Service.Interfaces;
+using System.Text.Json;
 
 namespace Api.OrderGenerator.Controllers;
 
@@ -34,6 +35,7 @@ public class OrderGeneratorController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateOrder(Order order)
     {
+        Console.WriteLine($"Ordem Recebida: {JsonSerializer.Serialize(order)}");
         var orderValidation = await _orderGeneratorService.ValidateOrder(order);
 
         if (!orderValidation.IsValid)
@@ -42,6 +44,7 @@ public class OrderGeneratorController : ControllerBase
             return BadRequest(validationMessages);
         }
 
-        return Ok();
+        await _orderGeneratorService.ProcessOrder(order);
+        return Ok(order);
     }
 }

@@ -17,10 +17,12 @@ public class OrderSenderService : IOrderSenderService
 
     public void SendOrder(Order order)
     {
+        char orderSide = GetOrderSide(order);
+
         var msg = new QuickFix.FIX44.NewOrderSingle(
             new ClOrdID(Guid.NewGuid().ToString()),
             new Symbol(order.Symbol),
-            new Side(Side.BUY),
+            new Side(orderSide),
             new TransactTime(DateTime.UtcNow),
             new OrdType(OrdType.MARKET)
         );
@@ -37,5 +39,13 @@ public class OrderSenderService : IOrderSenderService
             throw new InvalidOperationException("Nenhuma sessão FIX ativa/logada.");
 
         Session.SendToTarget(msg, sessionId);
+        Console.WriteLine($"Ordem enviada: {order.Symbol} {order.Side} {order.Quantity} @ {order.Price}");
+    }
+
+    private static char GetOrderSide(Order order)
+    {
+        return order.Side.Equals("COMPRA", StringComparison.CurrentCultureIgnoreCase)
+            ? Side.BUY
+            : Side.SELL;
     }
 }
