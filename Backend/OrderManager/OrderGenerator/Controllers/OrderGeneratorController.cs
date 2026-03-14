@@ -35,16 +35,16 @@ public class OrderGeneratorController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateOrder(Order order)
     {
-        Console.WriteLine($"Ordem Recebida: {JsonSerializer.Serialize(order)}");
-        var orderValidation = await _orderGeneratorService.ValidateOrder(order);
+        Console.WriteLine($"\nOrdem Recebida: {JsonSerializer.Serialize(order)}");
 
-        if (!orderValidation.IsValid)
-        {
-            var validationMessages = orderValidation.Errors.Select(e => e.ErrorMessage);
-            return BadRequest(validationMessages);
+        var result = await _orderGeneratorService.ProcessOrder(order);
+
+        if (!result.IsValid)
+        { 
+            Console.WriteLine($"Ordem Inválida: {string.Join(", ", result.Errors)}");
+            return BadRequest(result);
         }
 
-        await _orderGeneratorService.ProcessOrder(order);
         return Ok(order);
     }
 }

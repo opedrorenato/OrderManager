@@ -1,6 +1,5 @@
 ﻿using Domain.Models;
 using FluentValidation;
-using FluentValidation.Results;
 using Service.Interfaces;
 
 namespace Service.Services;
@@ -11,7 +10,7 @@ public class OrderGeneratorService : IOrderGeneratorService
     private readonly IOrderSenderService _orderSenderService;
 
     public OrderGeneratorService(
-        IValidator<Order> validator, 
+        IValidator<Order> validator,
         IOrderSenderService orderSenderService
     )
     {
@@ -19,14 +18,15 @@ public class OrderGeneratorService : IOrderGeneratorService
         _orderSenderService = orderSenderService;
     }
 
-    public async Task<ValidationResult> ValidateOrder(Order order)
+    public async Task<ResultModel<Order>> ProcessOrder(Order order)
     {
-        var result = await _validator.ValidateAsync(order);
-        return result;
-    }
+        var orderValidation = await _validator.ValidateAsync(order);
+        if (!orderValidation.IsValid)
+        {
+            return ResultModel<Order>.InvalidResult(orderValidation.Errors.Select(e => e.ErrorMessage));
+        }
 
-    public async Task ProcessOrder(Order order)
-    {
-        _orderSenderService.SendOrder(order);
+        await _orderSenderService.SendOrder(order);
+        return ResultModel<Order>.ValidResult(order);
     }
 }

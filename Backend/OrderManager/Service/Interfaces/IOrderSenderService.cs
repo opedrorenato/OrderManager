@@ -4,5 +4,5 @@ namespace Service.Interfaces;
 
 public interface IOrderSenderService
 {
-    void SendOrder(Order order);
+    Task<string> SendOrder(Order order);
 }

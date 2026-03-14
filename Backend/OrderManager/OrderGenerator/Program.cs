@@ -1,8 +1,4 @@
 using FluentValidation;
-using QuickFix;
-using QuickFix.Logger;
-using QuickFix.Store;
-using QuickFix.Transport;
 using Service.Interfaces;
 using Service.Services;
 using Service.Validators;
@@ -41,24 +37,24 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
-
 // QuickFix
-var settings = new SessionSettings("initiator.cfg");
-var orderSender = new OrderSenderApp();
-var storeFactory = new FileStoreFactory(settings);
-var logFactory = new FileLogFactory(settings);
+try
+{
+    builder.Services.AddSingleton<FixInitiatorApp>();
+    builder.Services.AddHostedService<QuickFixHostedService>();
 
-var initiator = new SocketInitiator(orderSender, storeFactory, settings, logFactory);
-initiator.Start();
+    Console.WriteLine("-- QuickFix configurado");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Erro ao configurar QuickFix: {ex.Message}");
+}
 
 
 
 // Dependencies
-builder.Services.AddSingleton(initiator);
 builder.Services.AddScoped<IOrderSenderService, OrderSenderService>();
-
 builder.Services.AddScoped<IOrderGeneratorService, OrderGeneratorService>();
-
 builder.Services.AddValidatorsFromAssemblyContaining<OrderValidator>();
 
 
