@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { OrderService } from './order.service';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-root',
@@ -20,6 +21,7 @@ export class App {
   constructor(
     private fb: FormBuilder,
     private orderService: OrderService,
+    private toastr: ToastrService,
   ) {
     this.orderForm = this.fb.group({
       symbol: ['', [Validators.required, Validators.minLength(1)]],
@@ -163,11 +165,11 @@ export class App {
 
   onSubmit() {
     if (!this.orderForm.valid) {
+      this.toastr.warning('Preencha todos os campos corretamente', 'Formulário Inválido');
       return;
     }
 
     this.submitted = true;
-
     this.createOrder();
     console.log('Ordem enviada:', this.orderForm.value);
   }
@@ -185,23 +187,38 @@ export class App {
     this.orderService.createOrder(orderToSend).subscribe({
       next: (response) => {
         console.log('Ordem criada com sucesso:', response);
-        alert('Ordem criada com sucesso!');
-        this.orderForm.reset({ side: 'COMPRA' });
+        // alert('Ordem criada com sucesso!');
+        this.toastr.success('Ordem criada com sucesso!', 'Sucesso');
+        this.orderForm.reset(
+          { side: 'COMPRA' },
+          {
+            emitEvent: false,
+            onlySelf: true,
+          },
+        );
+
+        this.submitted = false;
       },
       error: (error) => {
         console.error('Erro ao criar ordem:', error);
 
         if (error.status === 0) {
-          alert('Erro: A API está indisponível. Verifique se o servidor está rodando.');
+          this.toastr.warning(
+            'Erro: A API está indisponível. Verifique se o servidor está rodando.',
+          );
         } else if (error.status === 404) {
-          alert('Erro 404: Endpoint não encontrado.');
+          this.toastr.error('Erro 404: Endpoint não encontrado.', 'Erro');
         } else if (error.status === 500) {
-          alert('Erro interno do servidor. Tente novamente mais tarde.');
-        } else if (error.status === 400 && Array.isArray(error.error)) {
-          const errorList = error.error.join('\n');
-          alert(`Erro 400: Requisição Inválida - Erros de validação:\n${errorList}`);
+          this.toastr.error('Erro interno do servidor. Tente novamente mais tarde.', 'Erro');
+        } else if (error.status === 400 && Array.isArray(error.error?.errors)) {
+          const errorList = error.error.errors.join('<br/><br/>');
+          this.toastr.error(
+            `Erro 400: Requisição Inválida. Erros de validação:<br/><br/>${errorList}`,
+            'Erro',
+            { enableHtml: true },
+          );
         } else {
-          alert(`Erro ao criar ordem: ${error.message}`);
+          this.toastr.error(`Erro ao criar ordem: ${error.message}`, 'Erro', { enableHtml: true });
         }
       },
     });
