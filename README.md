@@ -1,20 +1,12 @@
 # Order Manager
 
-Solução completa para gerenciamento e processamento de ordens usando protocolo FIX 4.4, com backend em C# (.NET 8) e frontend em Angular.
-
-## Descrição
-
-Solução composta por três aplicações principais que se comunicam usando o protocolo FIX com a versão 4.4 (lib do QuickFix disponível em https://quickfixn.org/):
-
-1. **OrderGenerator** (C# API) - Aplicação que expõe endpoints REST para criar novas ordens
-2. **OrderAccumulator** (C# FIX Servidor) - Processa ordens via FIX e calcula exposição financeira
-3. **Frontend** (Angular) - Interface web para criar ordens e visualizar exposição
+Solução composta por três aplicações principais que se comunicam usando o protocolo FIX na versão 4.4 (lib do QuickFix disponível em https://quickfixn.org/):
 
 ## Tecnologias Utilizadas
 
-- **Backend**: C# 12, .NET 8, ASP.NET Core
+- **Backend**: .NET 10, C# 14
 - **Protocolo**: FIX 4.4 (QuickFixN)
-- **Frontend**: Angular 17, TypeScript, Bootstrap
+- **Frontend**: Angular 21, TypeScript, Node.js 24
 - **Containerização**: Docker & Docker Compose
 
 ## Fluxo de Comunicação
@@ -28,130 +20,120 @@ FIX Protocol 4.4
     ↓
 OrderAccumulator (FIX Server - C#)
     ↓
-Exposição Calculada & Armazenada
+Exposição calculada e exibida no Console
 ```
 
-## Funcionalidades
+## Componentes do Projeto
 
 ### OrderGenerator
 
-- API REST para criar novas ordens (NewOrderSingle)
+API REST que expõe endpoints para o frontend. Possui validações sobre os campos do formulário e a lógica para criação e envio de ordens para o QuickFix Engine (NewOrderSingle).
+
 - Validação de campos:
-  - **Símbolo**: PETR4, VALE3 ou VIIA4
+  - **Símbolo**: Deve ser necessariamente PETR4, VALE3 ou VIIA4
   - **Lado**: COMPRA ou VENDA
   - **Quantidade**: 1 até 99.999
   - **Preço**: Múltiplo de 0,01, máximo 999,99
-- Comunicação FIX com OrderAccumulator
+
+- A aplicação registra no log todas as ordens recebidas
+
+- Em caso de ordens **INVÁLIDAS**, os erros de validação são exibidos no Console da aplicação e também são retornados para o Frontend, para exibição na tela
+
+- Ordens **VÁLIDAS** seguem para envio ao QuickFix para serem contabilizadas pelo **OrderAccumulator**
 
 ### OrderAccumulator
 
-- Servidor FIX que recebe ordens do OrderGenerator
+Aplicação de Console com Servidor QuickFix que recebe ordens do OrderGenerator
+
 - Calcula exposição financeira consolidada por símbolo
-- API REST para consultar:
-  - Exposição total por símbolo
-  - Todas as ordens processadas
-  - Resumo de compras e vendas
+
+- Ordens de **COMPRA** devem aumentar a exposição
+- Ordens de **VENDA** devem diminuir a exposição
 
 ### Frontend
 
-- Formulário intuitivo para criar ordens
-- Visualização em tempo real da exposição financeira
-- Dashboard com histórico de ordens
+- Formulário para criação de ordens
+- Toats com informações sobre o Envio de Ordens (Validações ou Confirmação de Envio com sucesso)
 
-## Instalação e Uso
-
-### Pré-requisitos
-
-- Docker Desktop instalado
-- Git
-- (Opcional) .NET 8 SDK, Node.js 20+ para desenvolvimento local
-
-### Com Docker Compose (Recomendado)
-
-1. **Clone o repositório**
-
-   ```bash
-   git clone <repository-url>
-   cd OrderManager
-   ```
-
-2. **Inicie os containers**
-
-   ```bash
-   docker-compose up --build
-   ```
-
-   Aguarde até ver as mensagens indicando que os serviços estão rodando.
-
-3. **Acesse a aplicação**
-   - Frontend: http://localhost:4200
-   - OrderGenerator Swagger: http://localhost:5000/swagger
-   - OrderAccumulator: Console
-
-4. **Parar os containers**
-   ```bash
-   docker-compose down
-   ```
-
-### Desenvolvimento Local (sem Docker)
-
-#### OrderGenerator
-
-```bash
-cd src/OrderGenerator
-dotnet restore
-dotnet run --launch-profile https
-```
-
-Acesso: http://localhost:5000
-
-#### OrderAccumulator
-
-```bash
-cd src/OrderAccumulator
-dotnet restore
-dotnet run --launch-profile https
-```
-
-Acesso: http://localhost:5001
-
-#### Frontend
-
-```bash
-cd src/Frontend
-npm install
-ng serve
-```
-
-Acesso: http://localhost:4200
+![alt text](images/frontend.png)
 
 ## Estrutura do Projeto
 
 ```
 OrderManager/
-├── src/
-│   ├── OrderGenerator/           # API REST para criar ordens
-│   │   ├── Controllers/
-│   │   ├── FIXClientService.cs   # Cliente FIX
-│   │   ├── Models/
-│   │   └── Program.cs
-│   ├── OrderAccumulator/         # Servidor FIX & API de exposição
-│   │   ├── Controllers/
-│   │   ├── FIXServerService.cs   # Servidor FIX
-│   │   ├── ExposureService.cs    # Cálculo de exposição
-│   │   └── Program.cs
-│   └── Frontend/                 # Angular Application
-│       ├── src/app/
-│       │   ├── components/
-│       │   ├── services/
-│       │   └── app.component.ts
-│       └── package.json
-├── .docker/
-│   ├── Dockerfile.OrderGenerator
-│   ├── Dockerfile.OrderAccumulator
-│   └── Dockerfile.Frontend
+│
+├── Backend/
+│   └── OrderManager
+│       ├── OrderGenerator/
+│       ├── OrderAccumulator/
+│       └── OrderManager.slnx
+│
+├── Frontend/
+│   ├── src
+│   │   └── app/
+│   └── package.json
+│
 ├── docker-compose.yml
-└── README.md
+├── README.md
+├── start-local.bat
+└── start-local.sh
+```
+
+## Executando Localmente
+
+Para execução local é necessário a instalação do ".NET 10 SDK" e "Node.js 24".
+
+Na pasta raiz do projeto, OrderManager, executar os seguintes comandos:
+
+1. Executar OrderAccumulator
+
+```
+cd Backend/OrderManager/OrderAccumulator
+dotnet run
+```
+
+2. Executar OrderGenerator
+
+```
+cd Backend/OrderManager/OrderGenerator
+dotnet run
+```
+
+A API estará disponível em: http://localhost:5000/swagger
+
+3. Frontend
+
+```
+cd Frontend
+npm install
+npm start
+```
+
+O frontend estará disponível em: http://localhost:4200
+
+⚠️ **PS:** É necessário iniciar o OrderAccumulator antes do OrderGenerator para que a conexão entre eles seja feita instantaneamente. Caso contrário, uma nova tentativa de conexão será feita após um curto intervalo (No próximo Heartbeat, por padrão a cada 30 segundos).
+
+### Scripts 'start-local'
+
+Esse passo a passo está resumido no script start-local.bat (Windows) e no script start-local.sh (Linux). Os scripts estão configurados para iniciar 3 terminais separados, um para cada componente da solução.
+
+![alt text](images/start-local.png)
+
+## Execução com Docker Compose
+
+Na raiz do projeto, na pasta OrderManager, executar:
+
+```
+# Inicialização dos dockerfiles
+docker-compose up -d
+
+# Logs de todos os serviços
+docker-compose logs -f
+
+# Logs específicos
+docker-compose logs -f order-accumulator
+docker-compose logs -f order-generator
+docker-compose logs -f frontend
 ```
 
 ## Exemplo de Uso
