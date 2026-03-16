@@ -86,7 +86,7 @@ Exposição Calculada & Armazenada
 3. **Acesse a aplicação**
    - Frontend: http://localhost:4200
    - OrderGenerator Swagger: http://localhost:5000/swagger
-   - OrderAccumulator Swagger: http://localhost:5001/swagger
+   - OrderAccumulator: Console
 
 4. **Parar os containers**
    ```bash
@@ -154,26 +154,6 @@ OrderManager/
 └── README.md
 ```
 
-## Endpoints da API
-
-### OrderGenerator
-
-- **POST** `/api/orders/create` - Criar nova ordem
-  ```json
-  {
-    "symbol": "PETR4",
-    "side": "COMPRA",
-    "quantity": 100,
-    "price": 25.5
-  }
-  ```
-
-### OrderAccumulator
-
-- **GET** `/api/exposure/all` - Obter exposição consolidada
-- **GET** `/api/exposure/symbol/{symbol}` - Obter exposição de um símbolo
-- **GET** `/api/exposure/orders` - Obter todas as ordens processadas
-
 ## Exemplo de Uso
 
 1. Abra http://localhost:4200 no navegador
@@ -200,29 +180,6 @@ Exposição = (Σ Preço × Quantidade COMPRA) - (Σ Preço × Quantidade VENDA)
 - VENDA: 30 unidades @ 25,75 = R$ 772,50
 
 Exposição = (2.550 + 1.300) - 772,50 = **R$ 3.077,50**
-
-## Troubleshooting
-
-### Containers não iniciam
-
-```bash
-docker-compose logs
-```
-
-### Erro de conexão FIX
-
-- Certifique-se de que o OrderAccumulator está rodando na porta 9876
-- Verifique os arquivos de configuração em `Data/client.cfg` e `Data/server.cfg`
-
-### Frontend não se conecta às APIs
-
-- Verifique a porta do OrderGenerator (deve ser 5000)
-- Verifique a porta do OrderAccumulator (deve ser 5001)
-- Ative CORS nas APIs (já configurado por padrão)
-
-## Licença
-
-MIT
 
 ---
 
