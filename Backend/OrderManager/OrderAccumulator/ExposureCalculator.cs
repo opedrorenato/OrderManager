@@ -49,4 +49,20 @@ public class ExposureCalculator
             Console.Write("\n");
         }
     }
+
+    public decimal GetExposure(string symbol)
+    {
+        lock (_lock)
+        {
+            return _exposure.GetValueOrDefault(symbol, 0);
+        }
+    }
+
+    public void ClearExposure()
+    {
+        lock (_lock)
+        {
+            _exposure.Clear();
+        }
+    }
 }
