@@ -125,7 +125,7 @@ public class FixInitiatorApp : MessageCracker, IApplication
         newOrder.Set(new Price(order.Price));
 
         Session.SendToTarget(newOrder, _sessionId);
-        Console.WriteLine($"\nOrdem Enviada: {order.Symbol}, {order.Side}, {order.Quantity} @ R$ {order.Price:F2}");
+        Console.WriteLine($"\nOrdem Enviada: {order.Symbol}, {order.Side}, {order.Quantity} @ RS {order.Price:F2}");
 
         // Aguarda resposta por até 10 segundos
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));

@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  order-accumulator:
+    build:
+      context: ./Backend/OrderManager
+      dockerfile: OrderAccumulator/Dockerfile
+    container_name: order-accumulator
+    ports:
+      - "9876:9876"  # Porta do FIX
+    networks:
+      - order-network
+    restart: unless-stopped
+
+  order-generator:
+    build:
+      context: ./Backend/OrderManager
+      dockerfile: OrderGenerator/Dockerfile
+    container_name: order-generator-api
+    ports:
+      - "5000:5000"
+    networks:
+      - order-network
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - FIX_HOST=order-accumulator
+      - FIX_PORT=9876
+    depends_on:
+      - order-accumulator
+    restart: unless-stopped
+
+  frontend:
+    build: ./Frontend
+    container_name: order-frontend
+    ports:
+      - "4200:80"
+    networks:
+      - order-network
+    environment:
+      - API_URL=http://order-generator:5000  # Frontend chama API pelo nome do serviço
+    restart: unless-stopped
+
+networks:
+  order-network:
+    driver: bridge

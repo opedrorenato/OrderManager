@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ConsoleApp.OrderAccumulator": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

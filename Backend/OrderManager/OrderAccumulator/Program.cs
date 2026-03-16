@@ -21,8 +21,10 @@ static class Program
             if (!File.Exists(fullPath))
             {
                 Console.WriteLine("ERRO: Arquivo de configuracao nao encontrado!");
+#if DEBUG
                 Console.WriteLine("Pressione qualquer tecla para sair...");
                 Console.ReadKey();
+#endif
                 return;
             }
 
@@ -40,6 +42,8 @@ static class Program
             acceptor.Start();
 
             Console.WriteLine("OrderAccumulator rodando! Aguardando ordens...");
+
+#if DEBUG
             Console.WriteLine("Pressione 'E' para ver exposicao, 'Q' para sair\n");
 
             while (true)
@@ -55,6 +59,13 @@ static class Program
                     break;
                 }
             }
+#else
+            Console.WriteLine("Modo container: aguardando mensagens FIX...");
+            while (true)
+            {
+                Thread.Sleep(1000);
+            }
+#endif
 
             acceptor.Stop();
             Console.WriteLine("OrderAccumulator finalizado");
