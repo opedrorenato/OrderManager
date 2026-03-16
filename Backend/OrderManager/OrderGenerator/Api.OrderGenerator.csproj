@@ -18,6 +18,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Update="_fix_initiator.local.cfg">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	  <None Update="_fix_initiator.cfg">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>

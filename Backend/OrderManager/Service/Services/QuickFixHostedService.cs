@@ -3,6 +3,7 @@ using QuickFix;
 using QuickFix.Logger;
 using QuickFix.Store;
 using QuickFix.Transport;
+using System.Text.Json;
 
 namespace Service.Services;
 
@@ -14,15 +15,14 @@ public class QuickFixHostedService : IHostedService
     {
         try
         {
-            var fixHost = Environment.GetEnvironmentVariable("FIX_HOST") ?? "127.0.0.1";
-            var fixPort = int.Parse(Environment.GetEnvironmentVariable("FIX_PORT") ?? "9876");
-            
-            var settings = new SessionSettings("_fix_initiator.cfg");
-            settings.Get().SetString("SocketConnectHost", fixHost);
-            settings.Get().SetLong("SocketConnectPort", fixPort);
 
-            Console.WriteLine($"[GENERATOR] Tentando conectar em {fixHost}:{fixPort}");
+#if DEBUG
+            var quickFixConfig = "_fix_initiator.local.cfg";
+#else
+            var quickFixConfig = "_fix_initiator.cfg";
+#endif
 
+            var settings = new SessionSettings(quickFixConfig);
             var storeFactory = new FileStoreFactory(settings);
             var logFactory = new FileLogFactory(settings);
 
